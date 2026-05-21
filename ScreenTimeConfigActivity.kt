@@ -73,6 +73,7 @@ class ScreenTimeConfigActivity : ComponentActivity() {
     private fun ConfigScreen() {
         val hasPermission = ScreenTimeSyncEngine.hasUsageAccessPermission(this)
         val scope = rememberCoroutineScope()
+        val widget = remember { ScreenTimeWidget() }
         var uiState by remember { mutableStateOf(ConfigUiState.empty()) }
 
         LaunchedEffect(hasPermission) {
@@ -96,7 +97,7 @@ class ScreenTimeConfigActivity : ComponentActivity() {
                     onClick = {
                         scope.launch {
                             withContext(Dispatchers.IO) {
-                                ScreenTimeWidget().updateAll(this@ScreenTimeConfigActivity)
+                                widget.updateAll(this@ScreenTimeConfigActivity)
                             }
                             finishWithResult()
                         }
@@ -163,7 +164,7 @@ class ScreenTimeConfigActivity : ComponentActivity() {
                                     )
                                     ScreenTimeSyncEngine.refreshAndRender(this@ScreenTimeConfigActivity)
                                     ScreenTimeSyncEngine.enqueueNextSync(this@ScreenTimeConfigActivity)
-                                    ScreenTimeWidget().updateAll(this@ScreenTimeConfigActivity)
+                                    widget.updateAll(this@ScreenTimeConfigActivity)
                                 }
                             },
                         )
