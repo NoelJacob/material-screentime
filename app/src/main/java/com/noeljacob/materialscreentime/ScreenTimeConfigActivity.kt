@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.Dispatchers
@@ -39,8 +40,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.ZoneId
-
-private const val APP_ICON_PX = 72
 
 class ScreenTimeConfigActivity : ComponentActivity() {
     private var appWidgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
@@ -127,13 +126,15 @@ class ScreenTimeConfigActivity : ComponentActivity() {
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        val iconBitmap = remember(entry.icon) {
-                            entry.icon.toBitmap(APP_ICON_PX, APP_ICON_PX).asImageBitmap()
+                        val iconSize = 36.dp
+                        val iconSizePx = with(LocalDensity.current) { iconSize.roundToPx() }
+                        val iconBitmap = remember(entry.icon, iconSizePx) {
+                            entry.icon.toBitmap(iconSizePx, iconSizePx).asImageBitmap()
                         }
                         Image(
                             bitmap = iconBitmap,
                             contentDescription = entry.appName,
-                            modifier = Modifier.size(36.dp),
+                            modifier = Modifier.size(iconSize),
                         )
                         Column(
                             modifier = Modifier
