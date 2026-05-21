@@ -5,6 +5,7 @@
     android:minResizeWidth="120dp"
     android:minResizeHeight="120dp"
     android:resizeMode="horizontal|vertical"
+    android:configure="com.noeljacob.materialscreentime.ScreenTimeConfigActivity"
     android:updatePeriodMillis="0"
     android:initialLayout="@android:layout/simple_list_item_1"
     android:widgetCategory="home_screen" />
