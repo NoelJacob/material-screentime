@@ -23,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,7 +73,18 @@ class ScreenTimeConfigActivity : ComponentActivity() {
 
     @Composable
     private fun ConfigScreen() {
-        val hasPermission = ScreenTimeSyncEngine.hasUsageAccessPermission(this)
+        var hasPermission by remember {
+            mutableStateOf(ScreenTimeSyncEngine.hasUsageAccessPermission(this))
+        }
+        DisposableEffect(Unit) {
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    hasPermission = ScreenTimeSyncEngine.hasUsageAccessPermission(this@ScreenTimeConfigActivity)
+                }
+            }
+            lifecycle.addObserver(observer)
+            onDispose { lifecycle.removeObserver(observer) }
+        }
         val scope = rememberCoroutineScope()
         val widget = remember { ScreenTimeWidget() }
         var uiState by remember { mutableStateOf(ConfigUiState.empty()) }
