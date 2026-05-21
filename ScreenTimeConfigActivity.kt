@@ -162,7 +162,7 @@ class ScreenTimeConfigActivity : ComponentActivity() {
                                         this@ScreenTimeConfigActivity,
                                         excluded,
                                     )
-                                    ScreenTimeSyncEngine.refreshAndRender(this@ScreenTimeConfigActivity)
+                                    ScreenTimeSyncEngine.refreshState(this@ScreenTimeConfigActivity)
                                     ScreenTimeSyncEngine.enqueueNextSync(this@ScreenTimeConfigActivity)
                                     widget.updateAll(this@ScreenTimeConfigActivity)
                                 }

@@ -66,16 +66,16 @@ class ScreenTimeWidget : GlanceAppWidget() {
     )
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val hasPermission = ScreenTimeSyncEngine.hasUsageAccessPermission(context)
         provideContent {
-            WidgetContent(context)
+            WidgetContent(context, hasPermission)
         }
     }
 
     @Composable
-    private fun WidgetContent(context: Context) {
+    private fun WidgetContent(context: Context, hasPermission: Boolean) {
         val prefs = currentState<Preferences>()
         val display = prefs[DISPLAY_TEXT_KEY] ?: "Tap to refresh"
-        val hasPermission = ScreenTimeSyncEngine.hasUsageAccessPermission(context)
 
         androidx.glance.material3.GlanceTheme {
             val colors = androidx.glance.material3.GlanceTheme.colors
@@ -181,11 +181,17 @@ internal object ScreenTimeSyncEngine {
     private val widget = ScreenTimeWidget()
 
     suspend fun refreshAndRender(context: Context) {
+        val text = refreshState(context)
+        renderText(context, text)
+    }
+
+    suspend fun refreshState(context: Context): String {
         val text = withContext(Dispatchers.IO) {
             val usageMillis = calculateTodayIncludedUsageMillis(context)
             formatDuration(usageMillis)
         }
-        renderText(context, text)
+        updateWidgetState(context, text)
+        return text
     }
 
     suspend fun renderPermissionRequired(context: Context) {
@@ -222,6 +228,16 @@ internal object ScreenTimeSyncEngine {
                 updateWidgetPreferences(prefs, text)
             }
             widget.update(context, glanceId)
+        }
+    }
+
+    private suspend fun updateWidgetState(context: Context, text: String) {
+        val manager = GlanceAppWidgetManager(context)
+        val glanceIds = manager.getGlanceIds(ScreenTimeWidget::class.java)
+        for (glanceId in glanceIds) {
+            updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
+                updateWidgetPreferences(prefs, text)
+            }
         }
     }
 

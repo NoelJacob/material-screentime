@@ -6,6 +6,7 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class ScreenTimeWidgetReceiver : GlanceAppWidgetReceiver() {
@@ -18,17 +19,14 @@ class ScreenTimeWidgetReceiver : GlanceAppWidgetReceiver() {
         }
 
         val pendingResult = goAsync()
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                if (ScreenTimeSyncEngine.hasUsageAccessPermission(context)) {
-                    ScreenTimeSyncEngine.refreshAndRender(context)
-                } else {
-                    ScreenTimeSyncEngine.renderPermissionRequired(context)
-                }
-                ScreenTimeSyncEngine.enqueueNextSync(context)
-            } finally {
-                pendingResult.finish()
+        val job = CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            if (ScreenTimeSyncEngine.hasUsageAccessPermission(context)) {
+                ScreenTimeSyncEngine.refreshAndRender(context)
+            } else {
+                ScreenTimeSyncEngine.renderPermissionRequired(context)
             }
+            ScreenTimeSyncEngine.enqueueNextSync(context)
         }
+        job.invokeOnCompletion { pendingResult.finish() }
     }
 }
