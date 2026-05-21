@@ -112,7 +112,6 @@ class ScreenTimeWidget : GlanceAppWidget() {
                                 color = colors.onSurface,
                                 fontWeight = FontWeight.Bold,
                             ),
-                            modifier = GlanceModifier,
                         )
                         Spacer(GlanceModifier.height(8.dp))
                         Button(
@@ -173,7 +172,7 @@ internal object ScreenTimeStorage {
     fun saveExcludedPackages(context: Context, excluded: Set<String>) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
-            .putStringSet(EXCLUDED_PACKAGES_KEY, excluded.toSet())
+            .putStringSet(EXCLUDED_PACKAGES_KEY, excluded)
             .apply()
     }
 }

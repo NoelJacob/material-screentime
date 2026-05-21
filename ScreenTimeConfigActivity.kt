@@ -40,7 +40,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.concurrent.TimeUnit
+
+private const val APP_ICON_PX = 72
 
 class ScreenTimeConfigActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,7 +97,10 @@ class ScreenTimeConfigActivity : ComponentActivity() {
                             .padding(start = 12.dp),
                     ) {
                         Text(text = entry.appName, style = MaterialTheme.typography.bodyLarge)
-                        Text(text = formatDuration(entry.todayUsageMillis), style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = ScreenTimeSyncEngine.formatDuration(entry.todayUsageMillis),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     }
                     Checkbox(
                         checked = checked,
@@ -161,7 +165,7 @@ class ScreenTimeConfigActivity : ComponentActivity() {
         return AppUsageEntry(
             packageName = packageName,
             appName = pm.getApplicationLabel(this).toString(),
-            icon = pm.getApplicationIcon(this).toBitmap(72, 72),
+            icon = pm.getApplicationIcon(this).toBitmap(APP_ICON_PX, APP_ICON_PX),
             todayUsageMillis = usageMillis,
         )
     }
@@ -185,13 +189,6 @@ class ScreenTimeConfigActivity : ComponentActivity() {
                 Text("Open Settings")
             }
         }
-    }
-
-    private fun formatDuration(millis: Long): String {
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(millis).coerceAtLeast(0)
-        val hours = minutes / 60
-        val rem = minutes % 60
-        return if (hours > 0) "%dh %02dm".format(hours, rem) else "%dm".format(rem)
     }
 }
 
