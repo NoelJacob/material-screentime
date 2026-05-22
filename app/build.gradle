@@ -9,6 +9,8 @@ android {
     def releaseKeyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: ""
     def isNonBlankString = { value -> value != null && !value.trim().isEmpty() }
     def hasReleaseSigning = releaseStoreFile.exists() &&
+            releaseStoreFile.isFile() &&
+            releaseStoreFile.canRead() &&
             releaseStoreFile.length() > 0 &&
             isNonBlankString(releaseStorePassword) &&
             isNonBlankString(releaseKeyAlias) &&
@@ -38,6 +40,9 @@ android {
 
     buildTypes {
         release {
+            if (!hasReleaseSigning) {
+                logger.warn("Release signing credentials are missing or invalid; using debug signing for release build.")
+            }
             signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
             minifyEnabled false
         }
