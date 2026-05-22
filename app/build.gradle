@@ -2,10 +2,19 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 
 android {
-    def releaseStoreFile = System.getenv("RELEASE_STORE_FILE") ?: "release.keystore"
+    def releaseStoreFilePath = System.getenv("RELEASE_STORE_FILE") ?: "release.keystore"
+    def releaseStoreFile = file(releaseStoreFilePath)
     def releaseStorePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: ""
     def releaseKeyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: ""
     def releaseKeyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: ""
+    def isNonBlankString = { value -> value != null && !value.trim().isEmpty() }
+    def hasReleaseSigning = releaseStoreFile.exists() &&
+            releaseStoreFile.isFile() &&
+            releaseStoreFile.canRead() &&
+            releaseStoreFile.length() > 0 &&
+            isNonBlankString(releaseStorePassword) &&
+            isNonBlankString(releaseKeyAlias) &&
+            isNonBlankString(releaseKeyPassword)
 
     namespace "com.noeljacob.materialscreentime"
     compileSdk 34
@@ -19,17 +28,22 @@ android {
     }
 
     signingConfigs {
-        release {
-            storeFile file(releaseStoreFile)
-            storePassword releaseStorePassword
-            keyAlias releaseKeyAlias
-            keyPassword releaseKeyPassword
+        if (hasReleaseSigning) {
+            release {
+                storeFile releaseStoreFile
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            if (!hasReleaseSigning) {
+                logger.warn("Release signing credentials are missing or invalid; using debug signing for release build.")
+            }
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
             minifyEnabled false
         }
     }
