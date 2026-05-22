@@ -55,8 +55,10 @@ class ScreenTimeConfigActivity : ComponentActivity() {
             AppWidgetManager.INVALID_APPWIDGET_ID,
         ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
-        if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-            setResult(RESULT_CANCELED)
+        setResult(RESULT_CANCELED)
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            finish()
+            return
         }
         setContent {
             MaterialTheme {
