@@ -224,8 +224,8 @@ internal object ScreenTimeSyncEngine {
         for (glanceId in glanceIds) {
             updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
                 val mutablePrefs = prefs.toMutablePreferences()
-                mutablePrefs[stringPreferencesKey("display_text")] = text
-                mutablePrefs[longPreferencesKey("last_updated_at")] = System.currentTimeMillis()
+                mutablePrefs[DISPLAY_TEXT_KEY] = text
+                mutablePrefs[LAST_UPDATED_AT_KEY] = System.currentTimeMillis()
                 mutablePrefs
             }
             widget.update(context, glanceId)
@@ -238,8 +238,8 @@ internal object ScreenTimeSyncEngine {
         for (glanceId in glanceIds) {
             updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
                 val mutablePrefs = prefs.toMutablePreferences()
-                mutablePrefs[stringPreferencesKey("display_text")] = text
-                mutablePrefs[longPreferencesKey("last_updated_at")] = System.currentTimeMillis()
+                mutablePrefs[DISPLAY_TEXT_KEY] = text
+                mutablePrefs[LAST_UPDATED_AT_KEY] = System.currentTimeMillis()
                 mutablePrefs
             }
         }

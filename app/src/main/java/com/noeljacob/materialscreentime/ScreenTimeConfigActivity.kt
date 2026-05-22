@@ -54,7 +54,10 @@ class ScreenTimeConfigActivity : ComponentActivity() {
             AppWidgetManager.EXTRA_APPWIDGET_ID,
             AppWidgetManager.INVALID_APPWIDGET_ID,
         ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        setResult(RESULT_CANCELED)
+
+        if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+            setResult(RESULT_CANCELED)
+        }
         setContent {
             MaterialTheme {
                 ConfigScreen()
@@ -63,8 +66,10 @@ class ScreenTimeConfigActivity : ComponentActivity() {
     }
 
     private fun finishWithResult() {
-        val resultIntent = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        setResult(RESULT_OK, resultIntent)
+        if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+            val resultIntent = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            setResult(RESULT_OK, resultIntent)
+        }
         finish()
     }
 
