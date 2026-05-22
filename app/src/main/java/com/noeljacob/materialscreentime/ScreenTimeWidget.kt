@@ -11,10 +11,10 @@ import android.provider.Settings
 import android.util.Log
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.toMutablePreferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
+import androidx.glance.GlanceTheme
 import androidx.glance.GlanceModifier
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.GlanceAppWidget
@@ -40,7 +40,6 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.compose.ui.unit.DpSize
-import androidx.glance.material3.GlanceTheme
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -241,11 +240,8 @@ internal object ScreenTimeSyncEngine {
         val manager = GlanceAppWidgetManager(context)
         val glanceIds = manager.getGlanceIds(ScreenTimeWidget::class.java)
         for (glanceId in glanceIds) {
-            updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
-                val mutablePrefs = prefs.toMutablePreferences()
-                mutablePrefs[DISPLAY_TEXT_KEY] = text
-                mutablePrefs[LAST_UPDATED_AT_KEY] = System.currentTimeMillis()
-                mutablePrefs
+            updateAppWidgetState(context, glanceId) { prefs ->
+                setWidgetDisplayState(prefs, text)
             }
             widget.update(context, glanceId)
         }
@@ -255,13 +251,18 @@ internal object ScreenTimeSyncEngine {
         val manager = GlanceAppWidgetManager(context)
         val glanceIds = manager.getGlanceIds(ScreenTimeWidget::class.java)
         for (glanceId in glanceIds) {
-            updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
-                val mutablePrefs = prefs.toMutablePreferences()
-                mutablePrefs[DISPLAY_TEXT_KEY] = text
-                mutablePrefs[LAST_UPDATED_AT_KEY] = System.currentTimeMillis()
-                mutablePrefs
+            updateAppWidgetState(context, glanceId) { prefs ->
+                setWidgetDisplayState(prefs, text)
             }
         }
+    }
+
+    private fun setWidgetDisplayState(
+        prefs: androidx.datastore.preferences.core.MutablePreferences,
+        text: String,
+    ) {
+        prefs[DISPLAY_TEXT_KEY] = text
+        prefs[LAST_UPDATED_AT_KEY] = System.currentTimeMillis()
     }
 
     private fun calculateTodayIncludedUsageMillis(context: Context): Long {
