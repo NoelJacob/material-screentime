@@ -2,10 +2,16 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 
 android {
-    def releaseStoreFile = System.getenv("RELEASE_STORE_FILE") ?: "release.keystore"
+    def releaseStoreFilePath = System.getenv("RELEASE_STORE_FILE") ?: "release.keystore"
+    def releaseStoreFile = file(releaseStoreFilePath)
     def releaseStorePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: ""
     def releaseKeyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: ""
     def releaseKeyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: ""
+    def hasReleaseSigning = releaseStoreFile.exists() &&
+            releaseStoreFile.length() > 0 &&
+            releaseStorePassword &&
+            releaseKeyAlias &&
+            releaseKeyPassword
 
     namespace "com.noeljacob.materialscreentime"
     compileSdk 34
@@ -19,17 +25,19 @@ android {
     }
 
     signingConfigs {
-        release {
-            storeFile file(releaseStoreFile)
-            storePassword releaseStorePassword
-            keyAlias releaseKeyAlias
-            keyPassword releaseKeyPassword
+        if (hasReleaseSigning) {
+            release {
+                storeFile releaseStoreFile
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
             minifyEnabled false
         }
     }
