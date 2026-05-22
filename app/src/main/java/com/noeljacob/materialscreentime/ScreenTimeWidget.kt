@@ -41,7 +41,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.compose.ui.unit.DpSize
-import androidx.glance.GlanceTheme
+import androidx.glance.material3.GlanceTheme
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
