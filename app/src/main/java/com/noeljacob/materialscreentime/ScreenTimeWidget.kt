@@ -9,14 +9,12 @@ import android.os.Process
 import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
-import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.action.ActionParameters
-import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
@@ -28,7 +26,6 @@ import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.currentState
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.Button
-import androidx.glance.unit.ColorProvider
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -37,7 +34,6 @@ import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.size
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -49,7 +45,6 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.ZoneId
@@ -98,7 +93,7 @@ class ScreenTimeWidget : GlanceAppWidget() {
                             Spacer(GlanceModifier.height(8.dp))
                             Button(
                                 text = "Grant",
-                                onClick = actionStartActivity<ScreenTimeConfigActivity>(),
+                                onClick = actionRunCallback<OpenUsageAccessSettingsAction>(),
                             )
                         }
                     } else {
@@ -135,6 +130,19 @@ class RefreshAction : ActionCallback {
         }
         ScreenTimeSyncEngine.refreshAndRender(context)
         ScreenTimeSyncEngine.enqueueNextSync(context)
+    }
+}
+
+class OpenUsageAccessSettingsAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters,
+    ) {
+        context.startActivity(
+            Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
     }
 }
 
