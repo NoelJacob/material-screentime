@@ -3,30 +3,31 @@ package com.noeljacob.materialscreentime
 import android.app.AppOpsManager
 import android.app.KeyguardManager
 import android.app.usage.UsageStatsManager
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.os.Process
 import android.provider.Settings
-import androidx.compose.runtime.Composable
+import android.util.Log
 import androidx.compose.ui.unit.dp
-import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
+import androidx.glance.GlanceTheme
 import androidx.glance.GlanceModifier
-import androidx.glance.action.ActionCallback
 import androidx.glance.action.ActionParameters
-import androidx.glance.action.actionRunCallback
-import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
-import androidx.glance.appwidget.components.Button
+import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
-import androidx.glance.appwidget.state.PreferencesGlanceStateDefinition
-import androidx.glance.appwidget.state.currentState
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.glance.state.GlanceStateDefinition
+import androidx.glance.currentState
 import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.Button
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -38,6 +39,7 @@ import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import androidx.compose.ui.unit.DpSize
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -51,73 +53,66 @@ import java.util.concurrent.TimeUnit
 
 private const val PREFS_NAME = "screen_time_widget_prefs"
 private const val EXCLUDED_PACKAGES_KEY = "excluded_packages"
+private const val TAG = "ScreenTimeWidget"
 internal const val WORK_NAME = "screen_time_sync_chain"
 private val DISPLAY_TEXT_KEY = stringPreferencesKey("display_text")
 private val LAST_UPDATED_AT_KEY = longPreferencesKey("last_updated_at")
 
 class ScreenTimeWidget : GlanceAppWidget() {
-    override val stateDefinition = PreferencesGlanceStateDefinition
+    override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
 
     override val sizeMode = SizeMode.Responsive(
         setOf(
-            androidx.glance.appwidget.DpSize(120.dp, 120.dp),
-            androidx.glance.appwidget.DpSize(240.dp, 120.dp),
+            DpSize(120.dp, 120.dp),
+            DpSize(240.dp, 120.dp),
         ),
     )
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val hasPermission = ScreenTimeSyncEngine.hasUsageAccessPermission(context)
         provideContent {
-            WidgetContent(context, hasPermission)
-        }
-    }
+            val prefs = currentState<Preferences>()
+            val display = prefs[DISPLAY_TEXT_KEY] ?: "Tap to refresh"
 
-    @Composable
-    private fun WidgetContent(context: Context, hasPermission: Boolean) {
-        val prefs = currentState<Preferences>()
-        val display = prefs[DISPLAY_TEXT_KEY] ?: "Tap to refresh"
-
-        androidx.glance.material3.GlanceTheme {
-            val colors = androidx.glance.material3.GlanceTheme.colors
-            Box(
-                modifier = GlanceModifier
-                    .fillMaxSize()
-                    .background(colors.widgetBackground)
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (!hasPermission) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Permission Required",
-                            style = TextStyle(
-                                color = colors.onSurface,
-                                fontWeight = FontWeight.Bold,
-                            ),
-                        )
-                        Spacer(GlanceModifier.height(8.dp))
-                        Button(
-                            text = "Grant",
-                            onClick = actionStartActivity(
-                                Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                            ),
-                        )
-                    }
-                } else {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = display,
-                            style = TextStyle(
-                                color = colors.onSurface,
-                                fontWeight = FontWeight.Bold,
-                            ),
-                        )
-                        Spacer(GlanceModifier.height(8.dp))
-                        Button(
-                            text = "Refresh",
-                            onClick = actionRunCallback<RefreshAction>(),
-                        )
+            GlanceTheme {
+                val colors = GlanceTheme.colors
+                Box(
+                    modifier = GlanceModifier
+                        .fillMaxSize()
+                        .background(colors.widgetBackground)
+                        .padding(12.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (!hasPermission) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "Permission Required",
+                                style = TextStyle(
+                                    color = colors.onSurface,
+                                    fontWeight = FontWeight.Bold,
+                                ),
+                            )
+                            Spacer(GlanceModifier.height(8.dp))
+                            Button(
+                                text = "Grant",
+                                onClick = actionRunCallback<OpenUsageAccessSettingsAction>(),
+                            )
+                        }
+                    } else {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = display,
+                                style = TextStyle(
+                                    color = colors.onSurface,
+                                    fontWeight = FontWeight.Bold,
+                                ),
+                            )
+                            Spacer(GlanceModifier.height(8.dp))
+                            Button(
+                                text = "Refresh",
+                                onClick = actionRunCallback<RefreshAction>(),
+                            )
+                        }
                     }
                 }
             }
@@ -137,6 +132,27 @@ class RefreshAction : ActionCallback {
         }
         ScreenTimeSyncEngine.refreshAndRender(context)
         ScreenTimeSyncEngine.enqueueNextSync(context)
+    }
+}
+
+class OpenUsageAccessSettingsAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters,
+    ) {
+        try {
+            context.startActivity(
+                Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        } catch (e: ActivityNotFoundException) {
+            Log.w(TAG, "Usage Access settings not available on this device, opening general settings instead", e)
+            context.startActivity(
+                Intent(Settings.ACTION_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
     }
 }
 
@@ -224,8 +240,8 @@ internal object ScreenTimeSyncEngine {
         val manager = GlanceAppWidgetManager(context)
         val glanceIds = manager.getGlanceIds(ScreenTimeWidget::class.java)
         for (glanceId in glanceIds) {
-            updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
-                updateWidgetPreferences(prefs, text)
+            updateAppWidgetState(context, glanceId) { prefs ->
+                setWidgetDisplayState(prefs, text)
             }
             widget.update(context, glanceId)
         }
@@ -235,13 +251,16 @@ internal object ScreenTimeSyncEngine {
         val manager = GlanceAppWidgetManager(context)
         val glanceIds = manager.getGlanceIds(ScreenTimeWidget::class.java)
         for (glanceId in glanceIds) {
-            updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
-                updateWidgetPreferences(prefs, text)
+            updateAppWidgetState(context, glanceId) { prefs ->
+                setWidgetDisplayState(prefs, text)
             }
         }
     }
 
-    private fun updateWidgetPreferences(prefs: MutablePreferences, text: String) {
+    private fun setWidgetDisplayState(
+        prefs: androidx.datastore.preferences.core.MutablePreferences,
+        text: String,
+    ) {
         prefs[DISPLAY_TEXT_KEY] = text
         prefs[LAST_UPDATED_AT_KEY] = System.currentTimeMillis()
     }
