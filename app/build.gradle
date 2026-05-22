@@ -7,12 +7,12 @@ android {
     def releaseStorePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: ""
     def releaseKeyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: ""
     def releaseKeyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: ""
-    def hasText = { value -> value != null && !value.trim().isEmpty() }
+    def hasNonEmptyValue = { value -> value != null && !value.trim().isEmpty() }
     def hasReleaseSigning = releaseStoreFile.exists() &&
             releaseStoreFile.length() > 0 &&
-            hasText(releaseStorePassword) &&
-            hasText(releaseKeyAlias) &&
-            hasText(releaseKeyPassword)
+            hasNonEmptyValue(releaseStorePassword) &&
+            hasNonEmptyValue(releaseKeyAlias) &&
+            hasNonEmptyValue(releaseKeyPassword)
 
     namespace "com.noeljacob.materialscreentime"
     compileSdk 34
