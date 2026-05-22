@@ -3,10 +3,12 @@ package com.noeljacob.materialscreentime
 import android.app.AppOpsManager
 import android.app.KeyguardManager
 import android.app.usage.UsageStatsManager
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.os.Process
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
@@ -52,6 +54,7 @@ import java.util.concurrent.TimeUnit
 
 private const val PREFS_NAME = "screen_time_widget_prefs"
 private const val EXCLUDED_PACKAGES_KEY = "excluded_packages"
+private const val TAG = "ScreenTimeWidget"
 internal const val WORK_NAME = "screen_time_sync_chain"
 private val DISPLAY_TEXT_KEY = stringPreferencesKey("display_text")
 private val LAST_UPDATED_AT_KEY = longPreferencesKey("last_updated_at")
@@ -139,10 +142,18 @@ class OpenUsageAccessSettingsAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
-        context.startActivity(
-            Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
+        try {
+            context.startActivity(
+                Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        } catch (e: ActivityNotFoundException) {
+            Log.w(TAG, "Usage Access settings not available on this device, opening general settings instead", e)
+            context.startActivity(
+                Intent(Settings.ACTION_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
     }
 }
 
